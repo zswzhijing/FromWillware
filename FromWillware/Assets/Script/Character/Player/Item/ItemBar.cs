@@ -4,116 +4,94 @@ using UnityEngine;
 
 public class ItemBar : MonoBehaviour
 {
-    // Start is called before the first frame update
     public List<ItemStack> Items = new List<ItemStack>();
-    public Item CurrentItem;
-    public int CurrentItemIndex = 0;
-    public int MaxItems;
-    public bool CanUseItem;
-    
+    public int MaxItems = 4;
+
     private Player player;
     private PlayerMove playerMove;
     private PlayerAttack playerAttack;
     private PlayerParry playerParry;
-    
+
     void Start()
     {
         player = GetComponent<Player>();
-        playerParry = GetComponent<PlayerParry>();
+        playerMove = GetComponent<PlayerMove>();
         playerAttack = GetComponent<PlayerAttack>();
         playerParry = GetComponent<PlayerParry>();
-        playerMove = GetComponent<PlayerMove>();
-        
-        CurrentItem = new HP_Potion();
-        
+
+        Items.Clear();
+        // 初始化固定槽位
         for (int i = 0; i < MaxItems; i++)
         {
             Items.Add(null);
         }
-        Items[0] = new ItemStack(){item = CurrentItem, CurrentCount = 5};
     }
 
-    // Update is called once per frame
     void Update()
     {
-        CanUseItem = (!playerMove.IsRolling && !playerAttack.IsAttacking && !playerParry.IsDefensing);
-        if (CanUseItem)
-        {
-            if (Input.GetKeyDown(KeyCode.Alpha1))
-            {
-                UseItem(0);
-            }
-            else if (Input.GetKeyDown(KeyCode.Alpha2))
-            {
-                UseItem(1);
-            }
-            else if (Input.GetKeyDown(KeyCode.Alpha3))
-            {
-                UseItem(2);
-            }
-            else if (Input.GetKeyDown(KeyCode.Alpha4))
-            {
-                UseItem(3);
-            }
-        }
+        bool canUse = (!playerMove.IsRolling && 
+                       !playerAttack.IsAttacking && 
+                       !playerParry.IsDefensing);
+
+        if (!canUse) return;
+
+        if (Input.GetKeyDown(KeyCode.Alpha1)) UseItem(0);
+        if (Input.GetKeyDown(KeyCode.Alpha2)) UseItem(1);
+        if (Input.GetKeyDown(KeyCode.Alpha3)) UseItem(2);
+        if (Input.GetKeyDown(KeyCode.Alpha4)) UseItem(3);
     }
 
+    // ⭐ 使用物品
     public void UseItem(int index)
     {
-        if (index < 0 || index >= Items.Count)
-            return;
+        if (index < 0 || index >= Items.Count) return;
 
         ItemStack stack = Items[index];
 
-        if (stack == null || stack.item == null)
-            return;
+        if (stack == null || stack.item == null) return;
 
         if (stack.CurrentCount <= 0)
         {
-            Debug.Log("数量为0，无法使用");
+            Debug.Log("The item is empty");
             return;
         }
 
-        // 使用物品
+        // 使用
         stack.item.Fun(player);
 
-        // 数量减少
         stack.CurrentCount--;
-
-        Debug.Log("剩余数量: " + stack.CurrentCount);
+        
     }
 
-    public void AddItem(Item item)
+    // ⭐ 从背包加入（关键：引用）
+    public void SetItem(int index, ItemStack stack)
     {
-        // 先看有没有同类物品
-        foreach (var stack in Items)
+        if (index < 0 || index >= MaxItems) return;
+
+        Items[index] = stack; // ✅ 直接引用
+    }
+
+    // ⭐ 移除快捷栏物品
+    public void RemoveAt(int index)
+    {
+        if (index < 0 || index >= MaxItems) return;
+
+        Items[index] = null;
+    }
+
+    // ⭐ 从所有地方移除（同步）
+    void RemoveStack(ItemStack stack)
+    {
+        // 清快捷栏
+        for (int i = 0; i < Items.Count; i++)
         {
-            if (stack.item == item)
+            if (Items[i] == stack)
             {
-                stack.CurrentCount++;
-                return;
+                Items[i] = null;
             }
         }
 
-        // 没有就新建
-        if (Items.Count >= MaxItems)
-        {
-            Debug.Log("ItemBar is full!");
-            return;
-        }
-
-        Items.Add(new ItemStack
-        {
-            item = item,
-            CurrentCount = item.MaxCount
-        });
-    }
-
-    public void RemoveItem(int index)
-    {
-        if (index < 0 || index >= Items.Count)
-            return;
-
-        Items.RemoveAt(index);
+        // 👉 如果你有 Backpack，这里也应该调用：
+        // backpack.RemoveStack(stack);
     }
 }

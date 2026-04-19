@@ -5,8 +5,8 @@ using UnityEngine;
 public class BackPack : MonoBehaviour
 {
     // Start is called before the first frame update
-    public int MaxCount;
-    public int CurrentCount;
+    public int MaxSize;
+    public int CurrentSize;
     public int CurrentIndex;
     
     void Start()
