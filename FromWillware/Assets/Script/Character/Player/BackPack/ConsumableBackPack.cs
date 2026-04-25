@@ -6,7 +6,8 @@ public class ConsumableBackPack : BackPack,ISaveable
 {
     // Start is called before the first frame update
     public List<ItemStack> Items = new List<ItemStack>();
-
+    public string UniqueID = "ConsumableBackPack";
+    
     private ItemPickup nearbyItem;
     private ItemBar itemBar;
     private ItemPickup itemPickup;
@@ -69,11 +70,6 @@ public class ConsumableBackPack : BackPack,ISaveable
             {
                 stack.CurrentCount++;
                 return true;
-            }
-            else
-            {
-                Debug.Log("The item is MaxCount");
-                return false;
             }
         }
 
@@ -159,71 +155,65 @@ public class ConsumableBackPack : BackPack,ISaveable
        
     }
     
-    public object CaptureState()
+    public string GetUniqueID()
     {
-        InventoryData data = new InventoryData();
-        data.items = new List<InventoryItemData>();
+        return "ConsumableBackPack";
+    }
+
+    // ================= SAVE =================
+    public string CaptureState()
+    {
+        List<ItemStackData> data = new List<ItemStackData>();
 
         foreach (var stack in Items)
         {
-            if (stack == null || stack.item == null) continue;
-
-            data.items.Add(new InventoryItemData
+            data.Add(new ItemStackData
             {
-                itemID = stack.item.Name,
+                itemName = stack.item.Name,
                 count = stack.CurrentCount,
                 barIndex = stack.BarIndex
             });
         }
 
-        return JsonUtility.ToJson(data);
+        return JsonUtility.ToJson(new Wrapper { items = data });
     }
-    
-    public void RestoreState(object state)
+
+    // ================= LOAD =================
+    public void RestoreState(string json)
     {
-        string json = (string)state;
-        InventoryData data = JsonUtility.FromJson<InventoryData>(json);
+        var wrapper = JsonUtility.FromJson<Wrapper>(json);
 
         Items.Clear();
 
-        foreach (var itemData in data.items)
+        for (int i = 0; i < wrapper.items.Count; i++)
         {
-            Item item = ItemDatabase.Instance.GetItemByID(itemData.itemID);
+            var d = wrapper.items[i];
 
-            if (item == null)
-            {
-                Debug.LogWarning("找不到物品: " + itemData.itemID);
-                continue;
-            }
+            // ❗跳过空格（不存null）
+            if (d == null) continue;
 
-            ItemStack stack = new ItemStack(item, itemData.count);
-            stack.BarIndex = itemData.barIndex;
+            Item item = ItemDatabase.Get(d.itemName);
+
+            ItemStack stack = new ItemStack(item, d.count);
+            stack.BarIndex = d.barIndex;
 
             Items.Add(stack);
+
+            // 同步快捷栏
+            if (d.barIndex >= 0 && itemBar != null)
+            {
+                itemBar.SetItem(d.barIndex, stack);
+            }
         }
-
-        // ⭐ 恢复快捷栏（关键！）
-        //RestoreItemBar();
     }
-    
-    public string GetUniqueID()
+
+    [System.Serializable]
+    public class Wrapper
     {
-        return "ConsumableBackPack";
+        public List<ItemStackData> items;
     }
 }
 
 
 
-[System.Serializable]
-public class InventoryItemData
-{
-    public string itemID;
-    public int count;
-    public int barIndex;
-}
 
-[System.Serializable]
-public class InventoryData
-{
-    public List<InventoryItemData> items;
-}

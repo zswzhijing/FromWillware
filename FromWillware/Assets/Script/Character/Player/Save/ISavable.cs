@@ -4,7 +4,7 @@ using UnityEngine;
 
 public interface ISaveable
 {
-    object CaptureState();        // 保存
-    void RestoreState(object state); // 读取
+    string CaptureState();        // 保存
+    void RestoreState(string json); // 读取
     string GetUniqueID();         // 唯一ID
 }
