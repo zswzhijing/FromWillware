@@ -6,7 +6,7 @@ public class BackPack : MonoBehaviour
 {
     // Start is called before the first frame update
     public int MaxSize;
-    public int CurrentCount;
+    public int CurrentSize;
     public int CurrentIndex;
     
     void Start()

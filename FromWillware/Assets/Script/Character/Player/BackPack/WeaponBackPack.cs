@@ -11,7 +11,7 @@ public class WeaponBackPack : BackPack
     void Start()
     {
         CurrentIndex = 0;
-        CurrentCount = 0;
+        CurrentSize = 0;
     }
 
     // Update is called once per frame
@@ -22,14 +22,14 @@ public class WeaponBackPack : BackPack
 
     public void WeaponAdd(Weapon weapon)
     {
-        if (CurrentCount == MaxSize)
+        if (CurrentSize == MaxSize)
         {
             Debug.Log("The Weapon BackPack is Full");
             return;
         }
         
         Weapons.Add(weapon);
-        CurrentCount = Weapons.Count;
+        CurrentSize = Weapons.Count;
     }
 
     public void WeaponDesert(int index)
