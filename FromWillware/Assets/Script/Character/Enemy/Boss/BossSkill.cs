@@ -1,21 +1,19 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 [RequireComponent(typeof(Boss))]
 public abstract class BossSkill : MonoBehaviour
 {
-    public string skillName;
     public string animationTriggerName;
 
-    [Header("Ñ¡Ôñ·¶Î§")]
+    [Header("é€‰æ‹©èŒƒå›´")]
     public float minRange = 0f;
     public float maxRange = 10f;
 
-    [Header("Êµ¼Ê¹¥»÷¾àÀë")]
+    [Header("å®é™…æ”»å‡»è·ç¦»")]
     public float attackDistance = 5f;
 
-    [Header("°ÔÌåÓëµ¯·´")]
+    [Header("éœ¸ä½“")]
     public bool isHyperArmor = false;
-    public int parryStaggerLevel = 0;
 
     public int damage = 20;
     public Collider weaponCollider;
@@ -38,7 +36,7 @@ public abstract class BossSkill : MonoBehaviour
         }
     }
 
-    public void Use()
+    public virtual void Use()
     {
         boss.OnSkillStart(this);
         anim.SetTrigger(animationTriggerName);

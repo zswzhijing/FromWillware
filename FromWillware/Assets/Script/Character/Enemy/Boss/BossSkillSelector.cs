@@ -7,6 +7,9 @@ public class BossSkillSelector
     private Boss boss;
     private List<BossSkill> skills;
 
+    private Queue<BossSkill> recentSkills = new Queue<BossSkill>();
+    private int memoryCount = 2;
+
     public BossSkillSelector(Boss boss, List<BossSkill> skills)
     {
         this.boss = boss;
@@ -17,11 +20,31 @@ public class BossSkillSelector
     {
         var available = skills
             .Where(s => distance >= s.minRange && distance <= s.maxRange)
+            .Where(s => !recentSkills.Contains(s))
             .ToList();
 
         if (available.Count == 0)
-            return null;
+        {
+            available = skills
+                .Where(s => distance >= s.minRange && distance <= s.maxRange)
+                .ToList();
 
-        return available[Random.Range(0, available.Count)];
+            if (available.Count == 0)
+                return null;
+        }
+
+        var chosen = available[Random.Range(0, available.Count)];
+
+        RegisterSkillUse(chosen);
+
+        return chosen;
+    }
+
+    private void RegisterSkillUse(BossSkill skill)
+    {
+        recentSkills.Enqueue(skill);
+
+        if (recentSkills.Count > memoryCount)
+            recentSkills.Dequeue();
     }
 }

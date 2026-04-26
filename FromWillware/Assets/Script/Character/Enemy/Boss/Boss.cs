@@ -19,12 +19,8 @@ public class Boss : Character
     public float actionCooldown = 3f;
 
     [Header("破防系统")]
-    public float staggerThreshold = 100f;
-    public float staggerResetTime = 3f;
-    public float staggerDecaySpeed = 20f;
-
-    private float staggerValue = 0f;
-    private float lastHitTime = -999f;
+    public float staggerThreshold = 100f; // 破防上限
+    public float currentStagger = 0f;    // 当前累计的架势值（面板可见）
 
     [HideInInspector] public bool isExecutingSkill { get; private set; }
 
@@ -39,7 +35,6 @@ public class Boss : Character
     private BossMoveController moveController;
     private BossSkillSelector skillSelector;
 
-    private float pauseTimer = 0f;
     private bool isInStagger = false;
 
     void Start()
@@ -47,13 +42,14 @@ public class Boss : Character
         anim = GetComponent<Animator>();
         agent = GetComponent<NavMeshAgent>();
 
+        // 初始化血量（使用父类 Character 的属性）
         CurrentHP = MaxHP;
 
         agent.updateRotation = false;
         agent.stoppingDistance = 0f;
         agent.acceleration = 25f;
         agent.autoBraking = false;
-
+        lastActionTime = Time.time;
         anim.applyRootMotion = false;
 
         skills = GetComponents<BossSkill>().ToList();
@@ -67,22 +63,73 @@ public class Boss : Character
             playerTarget = GameObject.FindGameObjectWithTag("Player")?.transform;
     }
 
+    // ================= [受击逻辑：参考小兵逻辑修改] =================
+
+    // 1. 触发器检测玩家的武器
+    public void OnTriggerEnter(Collider other)
+    {
+        // 这里的标签 "PlayerAttack" 必须与你小兵脚本里的完全一致
+        if (other.CompareTag("PlayerAttack"))
+        {
+            // 获取玩家武器上的 Damage 脚本
+            Damage playerDamage = other.GetComponent<Damage>();
+            if (playerDamage != null)
+            {
+                TakeDamage(playerDamage.damage);
+            }
+        }
+    }
+
+    // 2. 处理扣血、架势条和受伤逻辑
+    public void TakeDamage(int damageAmount)
+    {
+        if (IsDead || CurrentHP <= 0) return;
+
+        // 扣血
+        CurrentHP -= damageAmount;
+
+        // 累计架势条 (1:1 转换)
+        currentStagger += damageAmount;
+
+        Debug.Log($"Boss受击: {damageAmount}, 剩余血量: {CurrentHP}, 当前架势: {currentStagger}");
+
+        // 死亡检测
+        if (CurrentHP <= 0)
+        {
+            Die();
+            return;
+        }
+
+        // 检查是否霸体（霸体状态下不触发破防动画）
+        bool isHyper = isExecutingSkill &&
+                       currentActiveSkill != null &&
+                       currentActiveSkill.isHyperArmor;
+
+        // 破防逻辑：如果不在霸体且架势条满了
+        if (!isHyper && currentStagger >= staggerThreshold)
+        {
+            currentStagger = 0f; // 重置架势条
+            TriggerBreak();      // 播放 DoHit 并停止动作
+        }
+    }
+    // ======================================================
+
     void Update()
     {
         if (IsDead || playerTarget == null) return;
 
-        transform.position = agent.nextPosition;
+        // 修复受击瞬移Bug：硬直时不强行同步位置
+        if (!isInStagger)
+        {
+            transform.position = agent.nextPosition;
+        }
+        else
+        {
+            agent.nextPosition = transform.position;
+        }
 
         float currentDistance = Vector3.Distance(transform.position, playerTarget.position);
 
-        // ===== 破防条衰减 =====
-        if (Time.time > lastHitTime + staggerResetTime)
-        {
-            staggerValue -= Time.deltaTime * staggerDecaySpeed;
-            staggerValue = Mathf.Max(0f, staggerValue);
-        }
-
-        // ===== 破防状态 =====
         if (isInStagger)
         {
             AnimatorStateInfo state = anim.GetCurrentAnimatorStateInfo(0);
@@ -93,22 +140,6 @@ public class Boss : Character
             return;
         }
 
-        // ===== 后摇 =====
-        if (pauseTimer > 0)
-        {
-            pauseTimer -= Time.deltaTime;
-
-            if (pauseTimer <= 0)
-            {
-                anim.speed = 1f;
-                agent.isStopped = false;
-            }
-
-            UpdateAnimator();
-            return;
-        }
-
-        // ===== 移动到技能攻击距离 =====
         if (isMovingToAttackDistance && pendingSkill != null)
         {
             float moveDistance = Vector3.Distance(transform.position, playerTarget.position);
@@ -132,20 +163,18 @@ public class Boss : Character
             return;
         }
 
-        // ===== 技能播放中 =====
         if (isExecutingSkill)
         {
             FaceTarget(10f);
 
             AnimatorStateInfo state = anim.GetCurrentAnimatorStateInfo(0);
-            if (!anim.IsInTransition(0) && state.normalizedTime >= 1f)
+            if (!anim.IsInTransition(0) && state.normalizedTime >= 0.98f)
                 OnSkillEnd();
 
             UpdateAnimator();
             return;
         }
 
-        // ===== 超出激活范围 =====
         if (currentDistance > activationRange)
         {
             agent.isStopped = true;
@@ -153,7 +182,6 @@ public class Boss : Character
             return;
         }
 
-        // ===== 技能选择 =====
         if (Time.time >= lastActionTime + actionCooldown)
         {
             var skill = skillSelector.ChooseSkill(currentDistance);
@@ -165,7 +193,6 @@ public class Boss : Character
             }
         }
 
-        // ===== 常规移动 =====
         agent.isStopped = false;
         FaceTarget(8f);
         moveController.Tick(currentDistance, playerTarget, optimalDistance, chaseSpeed, repositionSpeed);
@@ -181,39 +208,6 @@ public class Boss : Character
         transform.rotation *= anim.deltaRotation;
     }
 
-    // =========================
-    //  玩家攻击入口
-    // =========================
-    public void OnHitByPlayer(int damage)
-    {
-        if (IsDead) return;
-
-        CurrentHP -= damage;
-        CurrentHP = Mathf.Max(0, CurrentHP);
-
-        if (CurrentHP <= 0)
-        {
-            Die();
-            return;
-        }
-
-        lastHitTime = Time.time;
-        staggerValue += damage;
-
-        bool isHyper = isExecutingSkill &&
-                       currentActiveSkill != null &&
-                       currentActiveSkill.isHyperArmor;
-
-        if (!isHyper && staggerValue >= staggerThreshold)
-        {
-            staggerValue = 0f;
-            TriggerBreak();
-        }
-    }
-
-    // =========================
-    //  弹反
-    // =========================
     public void GetParried()
     {
         if (!isExecutingSkill || currentActiveSkill == null)
@@ -222,14 +216,8 @@ public class Boss : Character
         if (currentActiveSkill.isHyperArmor)
             return;
 
-        int level = currentActiveSkill.parryStaggerLevel;
-
         StartStaggerLogic();
-
-        if (level == 0)
-            anim.SetTrigger("DoStagger_Minor");
-        else
-            anim.SetTrigger("DoStagger_Major");
+        anim.SetTrigger("DoStagger_Minor");
     }
 
     private void TriggerBreak()
@@ -242,13 +230,12 @@ public class Boss : Character
     {
         isExecutingSkill = false;
         currentActiveSkill = null;
-
         isInStagger = true;
-        pauseTimer = 0f;
-        anim.speed = 1f;
 
         agent.isStopped = true;
+        agent.ResetPath();
         agent.velocity = Vector3.zero;
+        agent.nextPosition = transform.position;
     }
 
     private void EndStaggerInternal()
@@ -258,14 +245,16 @@ public class Boss : Character
         agent.isStopped = false;
     }
 
-    // =========================
-    //  技能
-    // =========================
     private void ExecuteSkill(BossSkill skill)
     {
         isExecutingSkill = true;
         currentActiveSkill = skill;
+
         agent.isStopped = true;
+        agent.ResetPath();
+        agent.velocity = Vector3.zero;
+        agent.nextPosition = transform.position;
+
         skill.Use();
         lastActionTime = Time.time;
     }
@@ -289,18 +278,6 @@ public class Boss : Character
         agent.isStopped = true;
         IsDead = true;
         anim.SetTrigger("DoDeath");
-    }
-
-    public void ExecutePause(float duration)
-    {
-        pauseTimer = duration;
-        agent.isStopped = true;
-        anim.speed = 0f;
-    }
-
-    public void ExecutePause()
-    {
-        ExecutePause(0.3f);
     }
 
     void FaceTarget(float speed)
