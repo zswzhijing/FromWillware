@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -6,12 +7,31 @@ public class SaveSystem : MonoBehaviour
 {
     public string fileName = "save.json";
 
+    private bool canSave = false;
     string Path => System.IO.Path.Combine(Application.persistentDataPath, fileName);
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.U)) Save();
+        if (canSave&&Input.GetKeyDown(KeyCode.E)) Save();
         if (Input.GetKeyDown(KeyCode.I)) Load();
+    }
+
+    
+
+    void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("SavePoint"))
+        {
+            canSave = true;
+        }
+    }
+
+    void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("SavePoint"))
+        {
+            canSave = false;
+        }
     }
 
     public void Save()
