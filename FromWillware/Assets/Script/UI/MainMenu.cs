@@ -6,12 +6,12 @@ using UnityEngine.SceneManagement; // 必须引用场景管理
 public class MainMenu : MonoBehaviour
 {
     [Header("UI面板")]
-    public GameObject settingsPanel;
+    public GameObject Settings;
 
     [Header("音效设置")]
     public AudioSource sfxSource;
     public AudioClip clickSound;
-
+    
     private void PlayClickSFX()
     {
         if (sfxSource != null && clickSound != null)
@@ -27,8 +27,8 @@ public class MainMenu : MonoBehaviour
         // 如果开始新游戏，通常需要清除旧的存档记录
         // PlayerPrefs.DeleteKey("SavedSceneIndex"); 
 
-        // 加载第一个正式关卡（假设索引为 1）
-        SceneManager.LoadScene(1);
+        // 按场景名加载，避免 Build Index 变化导致跳错场景
+        SceneManager.LoadScene("MainScene");
     }
 
     // 2. 继续游戏 (新增)
@@ -56,13 +56,13 @@ public class MainMenu : MonoBehaviour
     public void OpenSettings()
     {
         PlayClickSFX();
-        settingsPanel.SetActive(true);
+        Settings.SetActive(true);
     }
 
     public void CloseSettings()
     {
         PlayClickSFX();
-        settingsPanel.SetActive(false);
+        Settings.SetActive(false);
     }
 
     // 4. 退出游戏
