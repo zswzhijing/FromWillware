@@ -1,17 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement; // 必须引用场景管理
 
 public class MainMenu : MonoBehaviour
 {
     [Header("UI面板")]
-    public GameObject settingsPanel;
-
-    [Header("音效设置")]
+    public GameObject Settings;[Header("音效设置")]
     public AudioSource sfxSource;
     public AudioClip clickSound;
-
+    
     private void PlayClickSFX()
     {
         if (sfxSource != null && clickSound != null)
@@ -24,31 +23,48 @@ public class MainMenu : MonoBehaviour
     public void NewGame()
     {
         PlayClickSFX();
-        // 如果开始新游戏，通常需要清除旧的存档记录
-        // PlayerPrefs.DeleteKey("SavedSceneIndex"); 
+        
+        // 如果是新游戏，我们不需要读取旧存档
+        SaveSystem.shouldLoadSaveGame = false;
 
-        // 加载第一个正式关卡（假设索引为 1）
-        SceneManager.LoadScene(1);
+        // 可选：删除旧的存档文件，防止新游戏被旧数据污染
+        string savePath = SaveSystem.GetSavePath("save.json");
+        if (File.Exists(savePath))
+        {
+            File.Delete(savePath);
+        }
+        PlayerPrefs.DeleteKey("SavedSceneIndex");
+
+        // 按场景名加载
+        SceneManager.LoadScene("MainScene");
     }
 
-    // 2. 继续游戏 (新增)
+    // 2. 继续游戏 (修改后)
     public void ContinueGame()
     {
         PlayClickSFX();
 
-        // 从本地读取保存的场景索引。如果从没玩过，默认返回 0 (通常是主菜单)
+        // 检查 json 存档文件是否存在
+        string savePath = SaveSystem.GetSavePath("save.json");
+        bool hasJsonSave = File.Exists(savePath);
+
+        // 获取记录的场景索引
         int savedSceneIndex = PlayerPrefs.GetInt("SavedSceneIndex", 0);
 
-        if (savedSceneIndex != 0)
+        if (hasJsonSave && savedSceneIndex != 0)
         {
             Debug.Log("正在加载存档，关卡索引：" + savedSceneIndex);
+            
+            // 【关键步骤】：告诉 SaveSystem，场景加载完毕后请执行 Load() 函数
+            SaveSystem.shouldLoadSaveGame = true; 
+            
+            // 加载游戏场景
             SceneManager.LoadScene(savedSceneIndex);
         }
         else
         {
-            // 如果没有存档，可以让他开始新游戏，或者在 UI 上提示“无存档”
             Debug.Log("没有发现存档，请开始新游戏");
-            // NewGame(); // 或者取消注释这一行直接开始新游戏
+            // 可以在这里弹出一个UI提示框告诉玩家没有存档
         }
     }
 
@@ -56,13 +72,13 @@ public class MainMenu : MonoBehaviour
     public void OpenSettings()
     {
         PlayClickSFX();
-        settingsPanel.SetActive(true);
+        Settings.SetActive(true);
     }
 
     public void CloseSettings()
     {
         PlayClickSFX();
-        settingsPanel.SetActive(false);
+        Settings.SetActive(false);
     }
 
     // 4. 退出游戏
