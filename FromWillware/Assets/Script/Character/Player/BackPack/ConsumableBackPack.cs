@@ -123,36 +123,49 @@ public class ConsumableBackPack : BackPack,ISaveable
         }
     }
 
-    public void AddToItemBar(int BackIndex,int BarIndex)
+    // ⭐ 改进版的绑定逻辑
+    public void AddToItemBar(int BackIndex, int BarIndex)
     {
+        // 1. 如果选中的背包格子是空的，直接返回
+        if (BackIndex >= Items.Count || Items[BackIndex] == null || Items[BackIndex].item == null) 
+        {
+            Debug.Log("选中格子为空，无法绑定");
+            return;
+        }
+
+        // 2. 如果目标快捷栏（比如1号位）已经有东西了，先把它解绑
+        if (itemBar.Items[BarIndex] != null)
+        {
+            itemBar.Items[BarIndex].BarIndex = -1; 
+        }
+
+        // 3. 如果我们选中的这个物品，之前已经绑在别的快捷键上了，先把它从那个快捷键上抠下来
         if (Items[BackIndex].BarIndex != -1)
         {
-            Debug.Log("Is already in bar");
-            return;
+            itemBar.Items[Items[BackIndex].BarIndex] = null;
         }
 
-        for (int i = 0; i < Items.Count; i++)
-        {
-            if (Items[i] != null && Items[i].BarIndex == BarIndex)
-            {
-                RemoveFromItemBar(i);
-                break;
-            }
-        }
+        // 4. 正式绑定！
         Items[BackIndex].BarIndex = BarIndex;
-        itemBar.Items[BarIndex] =  Items[BackIndex];
+        itemBar.Items[BarIndex] = Items[BackIndex];
+        
+        Debug.Log($"已将 {Items[BackIndex].item.Name} 绑定到快捷键 {BarIndex + 1}");
     }
 
+    // ⭐ 改进版的解绑逻辑
     public void RemoveFromItemBar(int BackIndex)
     {
-        if (Items[BackIndex].BarIndex == -1)
+        if (BackIndex >= Items.Count || Items[BackIndex] == null) return;
+
+        int currentBarIndex = Items[BackIndex].BarIndex;
+        
+        // 如果它身上有快捷栏编号，说明它被绑定了，我们把它解绑
+        if (currentBarIndex != -1)
         {
-            Debug.Log("Is not in bar");
-            return;
+            itemBar.Items[currentBarIndex] = null; // 清空快捷栏的引用
+            Items[BackIndex].BarIndex = -1;        // 恢复成未绑定状态
+            Debug.Log("物品已从快捷栏移除");
         }
-        itemBar.Items[Items[BackIndex].BarIndex] =  null;
-        Items[BackIndex].BarIndex = -1;
-       
     }
     
     public string GetUniqueID()

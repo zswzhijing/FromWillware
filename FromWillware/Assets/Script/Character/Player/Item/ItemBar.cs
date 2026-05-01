@@ -29,6 +29,15 @@ public class ItemBar : MonoBehaviour
 
     void Update()
     {
+        // ==========================================
+        // ⭐ 新增拦截：如果背包面板是打开状态，直接 return，禁止使用物品！
+        // ==========================================
+        if (InventoryUIManager.Instance != null && InventoryUIManager.Instance.inventoryPanel.activeSelf)
+        {
+            return; 
+        }
+        
+
         bool canUse = (!playerMove.IsRolling && 
                        !playerAttack.IsAttacking && 
                        !playerParry.IsDefensing);
@@ -41,6 +50,7 @@ public class ItemBar : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha4)) UseItem(3);
     }
 
+    // ⭐ 使用物品
     // ⭐ 使用物品
     public void UseItem(int index)
     {
@@ -56,11 +66,41 @@ public class ItemBar : MonoBehaviour
             return;
         }
 
-        // 使用
+        // 1. 使用物品
         stack.item.Fun(player);
 
+        // 2. 数量减少
         stack.CurrentCount--;
         
+        // ==========================================
+        // ⭐ 新增核心逻辑：如果物品用光了（数量 <= 0），彻底清理数据！
+        // ==========================================
+        if (stack.CurrentCount <= 0)
+        {
+            // 第一步：从快捷栏的数据列表中清空它
+            Items[index] = null;
+
+            // 第二步：从背包的数据列表中也清空它
+            ConsumableBackPack backPack = GetComponent<ConsumableBackPack>();
+            if (backPack != null)
+            {
+                for (int i = 0; i < backPack.Items.Count; i++)
+                {
+                    // 找到背包里对应的这一个“空壳”
+                    if (backPack.Items[i] == stack)
+                    {
+                        backPack.Items[i] = null; // 把它变成空位
+                        
+                        // 【进阶可选】如果你想让背包在物品用完后自动把后面的物品往前挪（整理）
+                        // 你需要去 ConsumableBackPack 脚本里，把 void TidyBackPack() 改成 public void TidyBackPack()
+                        // 然后在这里取消下面这行代码的注释：
+                        // backPack.TidyBackPack(); 
+                        
+                        break; // 找到了就停止循环
+                    }
+                }
+            }
+        }
     }
 
     // ⭐ 从背包加入（关键：引用）
