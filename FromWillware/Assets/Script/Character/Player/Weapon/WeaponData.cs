@@ -10,4 +10,8 @@ public class WeaponData :ScriptableObject
     public float ConsumingStamina;
     public string Introduction;
     public GameObject WeaponPrefab;
+
+    public AnimationClip combo1;
+    public AnimationClip combo2;
+    public AnimationClip combo3;
 }

@@ -11,11 +11,13 @@ public class WeaponBackPack : BackPack
 
     private WeaponSystem weaponSystem;
     private WeaponPickup nearbyWeapon;
+    private PlayerInputHandler inputHandler;
     void Start()
     {
         CurrentIndex = 0;
         CurrentSize = 0;
         weaponSystem = GetComponent<WeaponSystem>();
+        inputHandler = GetComponent<PlayerInputHandler>();
     }
 
     // Update is called once per frame
@@ -42,7 +44,7 @@ public class WeaponBackPack : BackPack
 
     public void WeaponPickUp()
     {
-        if (nearbyWeapon!=null&&Input.GetKeyDown(KeyCode.E))
+        if (nearbyWeapon!=null&&(Input.GetKeyDown(KeyCode.E)||inputHandler.interactPressed))
         {
             WeaponAdd(nearbyWeapon.weaponData);
             weaponSystem.AddWeapon(nearbyWeapon.weaponData); // ✅ 关键
