@@ -68,9 +68,9 @@ ModelImporter:
         intParameter: 0
         messageOptions: 0
       - time: 0.45886284
-        functionName: DisableWeapon
+        functionName: PlaySFX
         data: 
-        objectReferenceParameter: {instanceID: 0}
+        objectReferenceParameter: {fileID: 8300000, guid: cbf0f24d71e119b42bcbcc7e222e5323, type: 3}
         floatParameter: 0
         intParameter: 0
         messageOptions: 0
