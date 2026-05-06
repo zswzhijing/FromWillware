@@ -16,5 +16,5 @@ public class WeaponData :ScriptableObject
     public AnimationClip combo3;
     public AnimationClip idle;
     public AnimationClip run;
-    public AnimationClip parry;
+    public AnimationClip walk;
 }

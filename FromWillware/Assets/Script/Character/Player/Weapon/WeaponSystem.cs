@@ -94,6 +94,7 @@ public class WeaponSystem : MonoBehaviour
         runtimeOverride["SwordAttack3"] = weapon.combo3;
         runtimeOverride["Sword And Shield Idle"] = weapon.idle;
         runtimeOverride["Sword And Shield Run"] = weapon.run;
+        runtimeOverride["Walking"] = weapon.walk;
         
         animator.runtimeAnimatorController = runtimeOverride;
     }

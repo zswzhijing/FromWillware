@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class WeaponBackPack : BackPack
+public class WeaponBackPack : BackPack,ISaveable
 {
     // Start is called before the first frame update
     public List<WeaponData> Weapons;
@@ -62,6 +62,23 @@ public class WeaponBackPack : BackPack
             return;
         }
     }
-    
+
+    public string GetUniqueID()
+    {
+        return "WeaponBackPack";
+    }
+
+    // ================= SAVE =================
+    public string CaptureState()
+    {
+       
+    }
+
+    // ================= LOAD =================
+    public void RestoreState(string json)
+    {
+      
+    }
+
     
 }
