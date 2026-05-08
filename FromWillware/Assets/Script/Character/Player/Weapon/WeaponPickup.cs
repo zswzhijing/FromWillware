@@ -6,7 +6,8 @@ using UnityEngine;
 public class WeaponPickup : MonoBehaviour, ISaveable
 {
     public WeaponData weaponData;
-
+     
+    public string uniqueId;
     public bool isPickedUp = false;
     
     void Start()
@@ -68,16 +69,7 @@ public class WeaponPickup : MonoBehaviour, ISaveable
 
     public string GetUniqueID()
     {
-        SaveableEntity entity =
-            GetComponentInParent<SaveableEntity>();
-
-        if (entity == null)
-        {
-            Debug.Log(gameObject.name + " missing SaveableEntity");
-            return "";
-        }
-
-        return entity.UniqueID;
+        return uniqueId;
     }
 
     // ================= 保存 =================

@@ -13,11 +13,16 @@ public class ConsumableBackPack : BackPack,ISaveable
     private ItemPickup itemPickup;
     private Animator animator;
     private PlayerInputHandler inputHandler;
-    void Start()
+    void Awake()
     {
         itemBar = GetComponent<ItemBar>();
         animator = GetComponent<Animator>();
         inputHandler = GetComponent<PlayerInputHandler>();
+        if (Items.Count == 0)
+        {
+            Items = new List<ItemStack>(
+                new ItemStack[MaxSize]);
+        }
         //Items = new List<ItemStack>(new ItemStack[MaxSize]);
     }
 
@@ -28,7 +33,12 @@ public class ConsumableBackPack : BackPack,ISaveable
     {
         if (other.CompareTag("Item"))
         {
-            nearbyItem = other.GetComponent<ItemPickup>();
+            ItemPickup pickup = other.GetComponent<ItemPickup>();
+
+            if (pickup != null && !pickup.isPickedUp)
+            {
+                nearbyItem = pickup;
+            }
         }
     }
 
@@ -46,6 +56,7 @@ public class ConsumableBackPack : BackPack,ISaveable
         {
             if (AddItem(nearbyItem.ItemData))
             {
+                nearbyItem.isPickedUp = true;
                 animator.SetTrigger("PickUp");
                 StartCoroutine(DestroyAfterDelay(nearbyItem.gameObject, 0.5f));
                 nearbyItem = null;
@@ -60,8 +71,6 @@ public class ConsumableBackPack : BackPack,ISaveable
     IEnumerator DestroyAfterDelay(GameObject obj, float delay)
     {
         yield return new WaitForSeconds(delay);
-        obj.GetComponent<ItemPickup>().isPickedUp = true;
-        //Destroy(obj);
         obj.SetActive(false);
     }
     
@@ -70,26 +79,28 @@ public class ConsumableBackPack : BackPack,ISaveable
         // 1. 先堆叠
         foreach (var stack in Items)
         {
-            if (stack != null && stack.item == item && stack.CurrentCount < item.MaxCount)
+            if (stack != null &&
+                stack.item == item &&
+                stack.CurrentCount < item.MaxCount)
             {
                 stack.CurrentCount++;
                 return true;
             }
         }
 
-        // 2. 新建
-        if (Items.Count < MaxSize)
+        // 2. 找空位
+        for (int i = 0; i < MaxSize; i++)
         {
-            Items.Add(new ItemStack(item, 1));
-            return true;
+            if (Items[i] == null)
+            {
+                Items[i] = new ItemStack(item, 1);
+                return true;
+            }
         }
-        else
-        {
-            Debug.Log("背包满");
-            return false;
-        }
-    }
 
+        Debug.Log("背包满");
+        return false;
+    }
     //整理背包
     void TidyBackPack()
     {
@@ -194,7 +205,8 @@ public class ConsumableBackPack : BackPack,ISaveable
                 {
                     itemName = stack.item.Name,
                     count = stack.CurrentCount,
-                    barIndex = stack.BarIndex
+                    barIndex = stack.BarIndex,
+                    backpackIndex = Items.IndexOf(stack)
                 });
             }
             
@@ -208,7 +220,13 @@ public class ConsumableBackPack : BackPack,ISaveable
     {
         var wrapper = JsonUtility.FromJson<Wrapper>(json);
 
-        Items.Clear();
+        if (wrapper == null || wrapper.items == null)
+        {
+            Debug.Log("读取背包失败");
+            return;
+        }
+        
+        Items = new List<ItemStack>(new ItemStack[MaxSize]);
 
         for (int i = 0; i < wrapper.items.Count; i++)
         {
@@ -234,7 +252,7 @@ public class ConsumableBackPack : BackPack,ISaveable
             ItemStack stack = new ItemStack(item, d.count);
             stack.BarIndex = d.barIndex;
 
-            Items.Add(stack);
+            Items[d.backpackIndex] = stack;
 
             // 同步快捷栏
             if (d.barIndex >= 0 && itemBar != null)

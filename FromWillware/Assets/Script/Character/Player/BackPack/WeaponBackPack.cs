@@ -44,25 +44,41 @@ public class WeaponBackPack : BackPack,ISaveable
 
     public void WeaponPickUp()
     {
-        if (nearbyWeapon!=null&&(Input.GetKeyDown(KeyCode.E)||inputHandler.interactPressed))
+        if (nearbyWeapon != null &&
+            (Input.GetKeyDown(KeyCode.E)
+             || inputHandler.interactPressed))
         {
-            WeaponAdd(nearbyWeapon.weaponData);
-            weaponSystem.AddWeapon(nearbyWeapon.weaponData); // ✅ 关键
-            nearbyWeapon.isPickedUp = true;
-            nearbyWeapon.gameObject.SetActive(false);
-            //Destroy(nearbyWeapon.gameObject);
+            // 先尝试加入背包
+            bool success =
+                WeaponAdd(nearbyWeapon.weaponData);
+
+            if (success)
+            {
+                // 再生成武器
+                weaponSystem.AddWeapon(
+                    nearbyWeapon.weaponData);
+
+                // 最后再标记已拾取
+                nearbyWeapon.isPickedUp = true;
+
+                nearbyWeapon.gameObject.SetActive(false);
+
+                nearbyWeapon = null;
+            }
         }
     }
 
-    public void WeaponAdd(WeaponData data)
+    public bool WeaponAdd(WeaponData data)
     {
-        if(Weapons.Count < MaxSize)
-            Weapons.Add(data);
-        else
+        if (Weapons.Count >= MaxSize)
         {
             Debug.Log("BackPack is full");
-            return;
+            return false;
         }
+
+        Weapons.Add(data);
+
+        return true;
     }
 
     public string GetUniqueID()

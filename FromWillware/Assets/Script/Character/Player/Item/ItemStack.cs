@@ -7,7 +7,6 @@ public class ItemStack
    public Item item;
    public int CurrentCount;
    public int BarIndex;
-   
    public ItemStack(Item item, int count)
    {
       this.item = item;

@@ -15,14 +15,15 @@ public class WeaponSystem : MonoBehaviour
     public AnimatorOverrideController baseOverride;
 
     private AnimatorOverrideController runtimeOverride;
-    
     private Player player;
+    private WeaponBackPack weaponBackPack;
     
     // Start is called before the first frame update
     void Start()
     {
         Weapons = new List<Transform>(2);
         animator = GetComponent<Animator>();
+        weaponBackPack = GetComponent<WeaponBackPack>();
     }
 
     // Update is called once per frame
@@ -75,13 +76,28 @@ public class WeaponSystem : MonoBehaviour
         weapon.gameObject.SetActive(false);
         weapon.GetComponentInChildren<Collider>().enabled = false;
         
-        Weapons.Add(weapon.transform);
+        if(Weapons.Count<MaxSzie)
+            Weapons.Add(weapon.transform);
 
         if (CurrentWeapon == null)
         {
-            EquipWeapon(Weapons.Count - 1);
-            ApplyWeaponAnimation(Weapons[Weapons.Count - 1]
+            EquipWeapon(0);
+            ApplyWeaponAnimation(Weapons[0]
                 .GetComponent<WeaponPickup>().weaponData);
+        }
+    }
+
+    public void SetToWeaponPoint(int BackIndex, int PointIndex)
+    {
+        GameObject weapon = weaponBackPack.Weapons[BackIndex].WeaponPrefab;
+        Weapons[PointIndex] = weapon.transform;
+        if (PointIndex != CurrentWeaponIndex)
+        {
+            Weapons[PointIndex].gameObject.SetActive(false);
+        }
+        else
+        {
+            Weapons[PointIndex].gameObject.SetActive(true);
         }
     }
     
@@ -93,7 +109,7 @@ public class WeaponSystem : MonoBehaviour
         runtimeOverride["SwordAttack2"] = weapon.combo2;
         runtimeOverride["SwordAttack3"] = weapon.combo3;
         runtimeOverride["Sword And Shield Idle"] = weapon.idle;
-        runtimeOverride["Sword And Shield Run"] = weapon.run;
+        runtimeOverride["Running"] = weapon.run;
         runtimeOverride["Walking"] = weapon.walk;
         
         animator.runtimeAnimatorController = runtimeOverride;
