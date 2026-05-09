@@ -140,11 +140,17 @@ public class PlayerMove : MonoBehaviour
         NextRolling = true;
     }
     
+    // void OnAnimatorMove()
+    // {
+    //     if (IsRolling) // 只有翻滚时才用动画位移
+    //     {
+    //         rb.velocity = animator.deltaPosition / Time.deltaTime;
+    //     }
+    // }
     void OnAnimatorMove()
     {
-        if (IsRolling) // 只有翻滚时才用动画位移
-        {
-            rb.velocity = animator.deltaPosition / Time.deltaTime;
-        }
+        if (!IsRolling) return;
+
+        rb.MovePosition(rb.position + animator.deltaPosition);
     }
 }
