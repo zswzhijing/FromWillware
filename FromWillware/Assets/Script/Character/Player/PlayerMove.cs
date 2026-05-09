@@ -20,6 +20,9 @@ public class PlayerMove : MonoBehaviour
     private Vector2 inputDir;
     private Player player;
     private PlayerParry playerParry;
+    private GetHit hitState;
+    private PlayerState playerState;
+    private PlayerInputHandler inputHandler;
     
     // Start is called before the first frame update
     void Start()
@@ -29,12 +32,15 @@ public class PlayerMove : MonoBehaviour
         NextRolling = true;
         rb = GetComponent<Rigidbody>();
         playerParry = GetComponent<PlayerParry>();
+        hitState = GetComponent<GetHit>();
+        playerState = GetComponent<PlayerState>();
+        inputHandler = GetComponent<PlayerInputHandler>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (!IsRolling && !playerAttack.IsAttacking && !playerParry.IsDefensing)
+        if (playerState.CanMove)
         {
             inputDir.x = Input.GetAxis("Horizontal");
             inputDir.y = Input.GetAxis("Vertical");
@@ -62,7 +68,7 @@ public class PlayerMove : MonoBehaviour
         Vector3 move = forward * v + right * h;
         move = move.normalized;
 
-        if (Input.GetKeyDown(KeyCode.LeftShift))
+        if (Input.GetKeyDown(KeyCode.LeftShift)||inputHandler.runningPressed)
         {
             IsRunning = !IsRunning;
         }
@@ -100,7 +106,7 @@ public class PlayerMove : MonoBehaviour
     {
         if (playerAttack.IsAttacking) return;
 
-        if (Input.GetKeyDown(KeyCode.Space) && NextRolling && !player.StaminaEmpty)
+        if ((Input.GetKeyDown(KeyCode.Space)|| inputHandler.rollPressed)&& NextRolling && !player.StaminaEmpty)
         {
             player.ConsumeStamina(RollStamina);
             animator.SetTrigger("Roll");
@@ -134,11 +140,17 @@ public class PlayerMove : MonoBehaviour
         NextRolling = true;
     }
     
+    // void OnAnimatorMove()
+    // {
+    //     if (IsRolling) // 只有翻滚时才用动画位移
+    //     {
+    //         rb.velocity = animator.deltaPosition / Time.deltaTime;
+    //     }
+    // }
     void OnAnimatorMove()
     {
-        if (IsRolling) // 只有翻滚时才用动画位移
-        {
-            rb.velocity = animator.deltaPosition / Time.deltaTime;
-        }
+        if (!IsRolling) return;
+
+        rb.MovePosition(rb.position + animator.deltaPosition);
     }
 }

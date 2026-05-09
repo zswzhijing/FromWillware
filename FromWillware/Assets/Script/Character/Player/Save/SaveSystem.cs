@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using System.Collections;
 
 public class SaveSystem : MonoBehaviour
 {
@@ -20,13 +21,15 @@ public class SaveSystem : MonoBehaviour
 
     string Path => GetSavePath(fileName);
 
-    void Start()
+    IEnumerator Start()
     {
-        // 游戏场景加载完成时，检查主菜单是否传来了“继续游戏”的信号
         if (shouldLoadSaveGame)
         {
+            yield return null; // 等一帧
+
             Load();
-            shouldLoadSaveGame = false; // 读取完毕后重置信号，防止下次正常进场景时误读取
+
+            shouldLoadSaveGame = false;
         }
     }
 

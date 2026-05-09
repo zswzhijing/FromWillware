@@ -13,7 +13,9 @@ public class PlayerAttack : MonoBehaviour
     private WeaponSystem weaponSystem;
     private Transform currentWeapon;
     private Collider currentWeaponCollider;
-    
+    private GetHit hitState;
+    private PlayerState playerState;
+    private PlayerInputHandler inputHandler;
     
     private bool canCombo = false;
     private bool inputBuffered = false;
@@ -31,19 +33,41 @@ public class PlayerAttack : MonoBehaviour
         player = GetComponent<Player>();
         playerParry = GetComponent<PlayerParry>();
         weaponSystem = GetComponent<WeaponSystem>();
+        hitState = GetComponent<GetHit>();
+        playerState = GetComponent<PlayerState>();
+        inputHandler = GetComponent<PlayerInputHandler>();
     }
 
     // Update is called once per frame
     void Update()
     {
         currentWeapon = weaponSystem.CurrentWeapon;
-        currentWeaponCollider = currentWeapon.GetComponentInChildren<Collider>();
+        if(currentWeapon!=null) 
+            currentWeaponCollider = FindChildWithTag(currentWeapon.transform,"PlayerAttack").GetComponent<Collider>();
         Attack();
+        FixIsAttacking();
+    }
+    
+    Transform FindChildWithTag(Transform parent, string tag)
+    {
+        foreach (Transform child in parent)
+        {
+            if (child.CompareTag(tag))
+            {
+                return child;
+            }
+
+            // 递归查找子物体的子物体
+            Transform result = FindChildWithTag(child, tag);
+            if (result != null)
+                return result;
+        }
+        return null;
     }
 
     void Attack()
     {
-        if (Input.GetKeyDown(KeyCode.J)&&!playerMove.IsRolling&&!player.StaminaEmpty&&!playerParry.IsDefensing)
+        if ((Input.GetKeyDown(KeyCode.J)||inputHandler.attackPressed)&&playerState.CanAttack)
         {
            
             if (IsAttacking)
@@ -60,9 +84,11 @@ public class PlayerAttack : MonoBehaviour
 
     void StartAttack()
     {
-        var weapon = currentWeapon.GetComponent<Weapon>();
+        if (IsAttacking) return;
+        if(currentWeapon==null) return;
+        var weapon = currentWeapon.GetComponent<WeaponPickup>();
     
-        animator.SetFloat("AttackSpeed", weapon.AttackSpeed);
+        //animator.SetFloat("AttackSpeed", weapon.AttackSpeed);
         
 
         rb.velocity = new Vector3(0, rb.velocity.y, 0);
@@ -71,7 +97,7 @@ public class PlayerAttack : MonoBehaviour
         if (comboStep == 1)
         {
             animator.SetTrigger("Combo1");
-            player.ConsumeStamina(weapon.ConsumingStamina);
+            player.ConsumeStamina(weapon.weaponData.ConsumingStamina);
         }
         IsAttacking = true;
     }
@@ -89,7 +115,7 @@ public class PlayerAttack : MonoBehaviour
     
     void DoNextCombo()
     {
-        var weapon = currentWeapon.GetComponent<Weapon>();
+        var weapon = currentWeapon.GetComponent<WeaponPickup>();
         if (!canCombo) return;
 
         comboStep++;
@@ -97,12 +123,12 @@ public class PlayerAttack : MonoBehaviour
         if(comboStep==2)
         {
             animator.SetTrigger("Combo2");
-            player.ConsumeStamina(weapon.ConsumingStamina);
+            player.ConsumeStamina(weapon.weaponData.ConsumingStamina);
         }
         else if(comboStep==3)
         {
             animator.SetTrigger("Combo3");
-            player.ConsumeStamina(weapon.ConsumingStamina);
+            player.ConsumeStamina(weapon.weaponData.ConsumingStamina);
         }
         
         canCombo = false;
@@ -139,5 +165,33 @@ public class PlayerAttack : MonoBehaviour
     {
         
         currentWeaponCollider.enabled = false;
+    }
+    
+    [SerializeField]
+    private bool hasEnteredAttack = false;
+
+    public void FixIsAttacking()
+    {
+        if (animator.IsInTransition(0)) return;
+
+        AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+
+        bool isAttackState =
+            stateInfo.IsName("Combo1") ||
+            stateInfo.IsName("Combo2") ||
+            stateInfo.IsName("Combo3");
+
+        // ✅ 标记：已经进入攻击动画
+        if (isAttackState)
+        {
+            hasEnteredAttack = true;
+        }
+
+        // ✅ 只有真正进入过攻击，才允许退出
+        if (hasEnteredAttack && !isAttackState)
+        {
+            IsAttacking = false;
+            hasEnteredAttack = false;
+        }
     }
 }

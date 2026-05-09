@@ -8,4 +8,5 @@ public class ItemStackData
     public string itemName; // ✅ 可序列化
     public int count;
     public int barIndex;
+    public int backpackIndex;
 }

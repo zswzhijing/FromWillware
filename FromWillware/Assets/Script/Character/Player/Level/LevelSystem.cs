@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class LevelSystem : MonoBehaviour
+public class LevelSystem : MonoBehaviour,ISaveable
 {
     public int level = 1;
     public int exp = 0;
@@ -10,6 +10,8 @@ public class LevelSystem : MonoBehaviour
     public int HpUpdate = 20;
     public int StaminaUpdate = 20;
     public int damageUpdate = 5;
+    public GameObject LevelUpEffectPrefab;
+    public Transform vfxPoint;
     
     private Player player;
     private Damage damage;
@@ -24,25 +26,23 @@ public class LevelSystem : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(Input.GetKeyDown(KeyCode.Y)) 
-            LevelUp();
+        LevelUp();
     }
 
     public void LevelUp()
     {
-        if (exp >= expToNextLevel)
+        while (exp >= expToNextLevel)
         {
             exp -= expToNextLevel;
             level++;
             PlayerUpdate();
+            Instantiate(
+                LevelUpEffectPrefab,
+                vfxPoint.position,
+                Quaternion.identity
+            );
             Debug.Log("Level Up to " + level );
         }
-        else
-        {
-            Debug.Log("exp is not enough");
-            return;
-        }
-        
     }
 
     public void PlayerUpdate()
@@ -53,5 +53,30 @@ public class LevelSystem : MonoBehaviour
         player.CurrentStamina = player.MaxStamina;
     }
 
-    
+    public void GetExp(int exp)
+    {
+        this.exp += exp;
+    }
+
+    public string GetUniqueID()
+    {
+        return "LevelSystem";
+    }
+
+    public string CaptureState()
+    {
+        LevelData data = new LevelData
+        {
+            level = this.level,
+            exp = this.exp
+        };
+        return JsonUtility.ToJson(data);
+    }
+
+    public void RestoreState(string state)
+    {
+        LevelData data = JsonUtility.FromJson<LevelData>(state);
+        level = data.level;
+        exp = data.exp;
+    }
 }
