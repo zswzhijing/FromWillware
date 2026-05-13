@@ -36,7 +36,6 @@ public class SaveSystem : MonoBehaviour
     void Update()
     {
         if (canSave && Input.GetKeyDown(KeyCode.E)) Save();
-        if (Input.GetKeyDown(KeyCode.I)) Load();
     }
 
     void OnTriggerEnter(Collider other)

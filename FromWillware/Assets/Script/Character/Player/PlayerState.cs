@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using AshenThrone;
 
 public class PlayerState : MonoBehaviour
 {
@@ -38,22 +39,22 @@ public class PlayerState : MonoBehaviour
 
     void SetCanMove()
     {
-        CanMove = !playerMove.IsRolling && !playerAttack.IsAttacking && !playerParry.IsDefensing && !hitState.IsGetHit;
+        CanMove = !playerMove.IsRolling && !playerAttack.IsAttacking && !playerParry.IsDefensing && !hitState.IsGetHit && !GameManager.Instance.IsDialogueActive;
     }
 
     void SetCanAttack()
     {
-        CanAttack = !playerMove.IsRolling && !player.StaminaEmpty && !playerParry.IsDefensing && !hitState.IsGetHit;
+        CanAttack = !playerMove.IsRolling && !player.StaminaEmpty && !playerParry.IsDefensing && !hitState.IsGetHit && !GameManager.Instance.IsDialogueActive;
     }
 
     void SetCanParry()
     {
-        CanParry = !hitState.IsGetHit && !playerMove.IsRolling && !playerAttack.IsAttacking;
+        CanParry = !hitState.IsGetHit && !playerMove.IsRolling && !playerAttack.IsAttacking && !GameManager.Instance.IsDialogueActive;
     }
 
     void SetCanGetHit()
     {
-        CanGetHit = !hitState.IsGetHit && !playerAttack.IsAttacking;
+        CanGetHit = !hitState.IsGetHit && !playerAttack.IsAttacking && !GameManager.Instance.IsDialogueActive;
     }
 
     void SetCanRecoverStamina()

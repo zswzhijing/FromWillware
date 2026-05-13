@@ -43,6 +43,8 @@ public class Boss : Character
     public int expReward = 500;
 
     [HideInInspector] public bool isExecutingSkill { get; private set; }
+    
+    public event System.Action OnBossDeath;
 
     private BossSkill currentActiveSkill;
     private BossSkill pendingSkill;
@@ -339,6 +341,8 @@ public class Boss : Character
         IsDead = true;
         anim.SetTrigger("DoDeath");
         if (audioSource && deathSound) audioSource.PlayOneShot(deathSound);
+
+        OnBossDeath?.Invoke();
 
         if (playerTarget != null)
         {

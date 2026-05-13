@@ -138,6 +138,29 @@ public class ConsumableBackPack : BackPack,ISaveable
         }
     }
 
+    // 按 Item 引用移除物品
+    public bool RemoveItemByReference(Item item)
+    {
+        for (int i = 0; i < Items.Count; i++)
+        {
+            if (Items[i] != null && Items[i].item == item)
+            {
+                // 如果物品在快捷栏，先从快捷栏移除
+                if (Items[i].BarIndex != -1)
+                {
+                    RemoveFromItemBar(i);
+                }
+                
+                Items[i] = null;
+                TidyBackPack();
+                Debug.Log($"已从背包移除: " + item.Name);
+                return true;
+            }
+        }
+        Debug.Log("背包中没有找到该物品");
+        return false;
+    }
+
     // ⭐ 改进版的绑定逻辑
     public void AddToItemBar(int BackIndex, int BarIndex)
     {
@@ -145,6 +168,13 @@ public class ConsumableBackPack : BackPack,ISaveable
         if (BackIndex >= Items.Count || Items[BackIndex] == null || Items[BackIndex].item == null) 
         {
             Debug.Log("选中格子为空，无法绑定");
+            return;
+        }
+
+        // 1.5 检查是否为剧情道具，剧情道具不能绑定到快捷栏
+        if (Items[BackIndex].item.Kind == ItemKind.Plot)
+        {
+            Debug.Log("剧情道具无法绑定到快捷栏");
             return;
         }
 
@@ -268,7 +298,3 @@ public class ConsumableBackPack : BackPack,ISaveable
         public List<ItemStackData> items;
     }
 }
-
-
-
-

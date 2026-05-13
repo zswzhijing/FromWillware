@@ -26,6 +26,9 @@ public class PlayerInputHandler : MonoBehaviour
 
     void OnEnable()
     {
+        if (input == null)
+            input = new PlayerInputActions();
+            
         input.Enable();
 
         input.Player.Move.performed += ctx => moveInput = ctx.ReadValue<Vector2>();
@@ -52,13 +55,25 @@ public class PlayerInputHandler : MonoBehaviour
         };
         
         input.Player.Running.performed += ctx => runningPressed = true;
+    }
 
-        
+    void OnDisable()
+    {
+        if (input != null)
+            input.Disable();
+    }
+
+    void OnDestroy()
+    {
+        if (input != null)
+        {
+            input.Disable();
+            input.Dispose();
+        }
     }
 
     void LateUpdate()
     {
-        // 模拟 GetKeyDown（只触发一帧）
         attackPressed = false;
         rollPressed = false;
         interactPressed = false;

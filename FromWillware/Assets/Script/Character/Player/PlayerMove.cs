@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using AshenThrone;
 
 public class PlayerMove : MonoBehaviour
 {
@@ -105,6 +106,7 @@ public class PlayerMove : MonoBehaviour
     public void Roll()
     {
         if (playerAttack.IsAttacking) return;
+        if (GameManager.Instance.IsDialogueActive) return;
 
         if ((Input.GetKeyDown(KeyCode.Space)|| inputHandler.rollPressed)&& NextRolling && !player.StaminaEmpty)
         {

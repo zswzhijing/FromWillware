@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using UnityEngine.InputSystem;
+using AshenThrone;
 
 public class CameraFollow : MonoBehaviour
 {
@@ -39,7 +40,7 @@ public class CameraFollow : MonoBehaviour
 
     void Update()
     {
-        //if (isResetting) return;
+        if (GameManager.Instance.IsDialogueActive) return;
         
         if (!IsLockOn())
         {

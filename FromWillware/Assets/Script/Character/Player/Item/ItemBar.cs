@@ -66,6 +66,13 @@ public class ItemBar : MonoBehaviour
             return;
         }
 
+        // 检查是否为剧情道具，剧情道具不能使用
+        if (stack.item.Kind == ItemKind.Plot)
+        {
+            Debug.Log("剧情道具无法使用");
+            return;
+        }
+
         // 1. 使用物品
         stack.item.Fun(player);
 
